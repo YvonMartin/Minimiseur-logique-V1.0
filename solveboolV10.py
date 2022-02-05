@@ -82,7 +82,7 @@ def input_tables_01(data_in, size):
     terme_0 = set()
     terme_1 = set()
     erreur = False
-    # par défaut on commence à lire les termes 1
+    # default starts reading terms 1
     type_terme = 1
     while len(data_in) != 0:
         rep = data_in.pop()
@@ -145,7 +145,7 @@ class Simply:
     # Call of the instance with the binary tables of the minterms and Max terms as parameter
     def __call__(self, tbl_1, tbl_0):
         self.tbl_1 = tbl_1
-        self.tbl_0 = tbl_0     #list_normalise
+        self.tbl_0 = tbl_0     # standard lists
 
         def __expense(terme_0_1):
             """
@@ -192,7 +192,7 @@ class Simply:
 
         """--------------------------------------------------------"""
         def __pt_facteur_unique(terme, table_0):
-            # retourne un terme reduit dont les bits à 1 pointe les colonnes de facteur essentiel
+            # returns a reduced term whose bits to 1 point to the essential factor columns
 
             pt_terme_unique = 0
             for i in table_0:
@@ -230,24 +230,19 @@ class Simply:
 
         """=================== additional terms =========================
         args:
-            pt_croix : correspond au variables essentielles communes aux differents termes
-            table_0_reduit_croix: table des croix reduite (sans les variables essentielles)
+            pt_croix: corresponds to the essential variables common to the different terms
+            table_0_reduit_croix: reduced cross table (without essential variables)
         return:
-            masque_tr_reduit: liste des masques correspondant à toute solutions possibles
+            mask_tr_reduit: list of masks corresponding to any possible solutions
 
         """
         def __terme_supp(pt_croix, table_0_reduit_croix):
             
             msq = self.MSQ0111B ^ pt_croix
-            #msq1 = msq0 - 1
-            #s0 = [[]]
-            #for croix in table_0_reduit_croix:
-            #   s0.append([cpt+1 for cpt in range(self.SIZE) if (croix & msq & (1<<cpt))])
             s0=[[cpt+1 for cpt in range(self.SIZE) if (croix & msq & (1<<cpt))] for croix in table_0_reduit_croix]    
             
             s0=__petrick(s0,PRE_ACCEL)
                 
-
             masque_tr_reduit = []
             for tdim in s0:
                 ms = pt_croix
@@ -265,11 +260,10 @@ class Simply:
             From the remaining lists of binary terms 1 (not yet covered by essential terms),
             and binary terms 0, returns the list of additional terms allowing
             full coverage of the function
-            Si SIM == True, tout les termes supplémentaires  (temps long) seront découvert.
-            Si SIM == False, seul le terme couvrant le maximum de termes 1 est retenu 
-            et les mintermes couvert sont retirés de la liste des mintermes restant à simplifier.
-            Ce mode est tres rapide mais  heuristique . Donc la solution pas nécessairement 
-            la meilleure
+            If SIM == True, all additional terms (long time) will be discovered.
+            If SIM == False, only the term covering the maximum of terms 1 is used
+            and the covered minterms are removed from the list of minterms remaining to simplify.
+            This mode is very fast but heuristic . So the solution not necessarily the best
             """
             if not(DETAIL):
                 if len(table_1_reduit):
@@ -279,14 +273,13 @@ class Simply:
                 table_terme_supl = []
                 for tab in table_1_reduit:
                     if not(tab & self.MSQ1000B):
-                        # Calculer dans pt_croix les variables obligatoires à partir des croix uniques
+                        # Calculate mandatory variables in pt_croix from single crosses
                         pt_croix = __pt_facteur_unique(tab, table_0)
-                        # creer la table des croix hors croix unique ( if not ...)
+                        # create the table of crosses out single cross ( if not ...)
                         table_0_reduit_croix = [i ^ tab for i in table_0 if not((i ^ tab) & pt_croix)]
-                        # chercher toutes les solutions sous forme de masque sur le terme à réduire
+                        # look for all solutions in mask form on the term to be reduced
                         masque_tr_reduit = __terme_supp(pt_croix, table_0_reduit_croix)
                         priorite = []
-                        # print('kk',table_1_reduit, masque_tr_reduit,tab)
                         for msq in masque_tr_reduit:
                             if not(msq & self.MSQ1000B):
                                 pr= 0
@@ -294,10 +287,10 @@ class Simply:
                                     if ((tr & self.MSQ1000B)==0 ) and (msq & tab) == (msq & tr ):
                                         pr += 1
                             priorite.append(pr)
-                        # terme ayant la plus grande couverture:
+                        # Term with the greatest coverage:
                         index_max= max(range(len(priorite)), key=priorite.__getitem__)
                         masq =  masque_tr_reduit[index_max]
-                        # retirer les mintermes 1 couverts de la liste des termes 1 restant à simplifier
+                        # remove minterms 1 covered from the list of terms 1 remaining to simplify
                         ter = tab,masq ^ self.MSQ0111B
                         for index,tr in enumerate(table_1_reduit):
                             if (masq & tab) == (masq & tr ):
@@ -317,15 +310,15 @@ class Simply:
                            
             else: 
                 """
-                Returne toutes les solutions possibles restantes
+                Returnes all remaining possible solutions
                 """                          
                 table_terme_supl = []
                 for tab in table_1_reduit:
-                    # Calculer dans pt_croix les variables obligatoires à partir des croix uniques
+                    # Calculate mandatory variables in pt_croix from single crosses
                     pt_croix = __pt_facteur_unique(tab, table_0)
-                    # creer la table des croix hors croix unique ( if not ...)
+                    # create the table of crosses out single cross( if not ...)
                     table_0_reduit_croix = [i ^ tab for i in table_0 if not((i ^ tab) & pt_croix)]
-                    # chercher toutes les solutions sous forme de masque sur le terme à réduire
+                    # look for all solutions in mask form on the term to be reduced
                     masque_tr_reduit = __terme_supp(pt_croix, table_0_reduit_croix)
                     ter = tab, masque_tr_reduit
                     table_terme_supl.append(ter)
@@ -340,9 +333,7 @@ class Simply:
             that provide total coverag
             return in DIMACS format with purs literals
             """
-
             table_synthese = [[] for i in range(len(table_1_restant))]
-
             cpt = 0
             for ter1, msq in table_terme_supl:
                 for index, ter in enumerate(table_1_restant):
@@ -352,29 +343,30 @@ class Simply:
                 cpt += 1
             return table_synthese, cpt
 
-        """=======2e methode ===== list of choices =========================== """
+        """============ list of choices =========================== """
         
         def __petrick(table, acceleration):
             if VERB:
                 print('/', end="")
             
             prereduction = []
-            #présimplification avant de passer à la méthode Petrick
-            # compter dans liste priorite le nombre de croix dans chaque colonnes
-            # (sauf dans les colonnes pointées par pt_croix)
-            # POST_ACCEL = 100
+            """
+            Presimplification before switching to the Petrick method.
+            count the number of crosses in each column in the priority list
+            (except in columns pointed by pt_croix)
+            """
             compteur = 0
 
-            while len(table) and compteur < acceleration: #wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+            while len(table) and compteur < acceleration: 
                 compteur += 1
                 if VERB:
                     print('+', end="")
-                # trouver les lignes avec minimun de croix dans col
+                # find the lines with minimun of cross in col
                 large_col = [len(i) for i in table]
                 min_col = min(large_col)
                 ligne=[j for i in table for j in i if len(i) == min_col]                              
                 ligne = list(set(ligne))
-                # trouver à partir des croix pointées par ligne une colonne avec un maximum de croix
+                # find from the crosses pointed out by line a column with a maximum of crosses
                 col=[]
                 for i in ligne:
                     cpt = 0
@@ -434,8 +426,6 @@ class Simply:
         if err:
 
             return [],[],[],True
-
-
 
         table_essentiel, table_1_restant = __terme_essentiel(table_1, table_0)
         if VERB:
